@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تطبيق ذِكْر - التذكير بالصلاة على النبي ﷺ</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f1;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .main-container {
+            width: 90%;
+            max-width: 600px;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+            box-sizing: border-box;
+        }
+
+        .main-title {
+            color: #2e7d32;
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 15px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: #fff;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        select:focus {
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+
+        .buttons-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-start {
+            background-color: #2e7d32;
+            color: white;
+        }
+
+        .btn-start:hover {
+            background-color: #1b5e20;
+        }
+
+        .btn-stop {
+            background-color: #d32f2f;
+            color: white;
+        }
+
+        .btn-stop:hover {
+            background-color: #b71c1c;
+        }
+
+        .status-box {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 15px;
+            font-weight: bold;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="main-title">🌟 تطبيق ذِكْر</div>
+        <div class="subtitle">قم بضبط التوقيت ليرن الهاتف بالصلاة على النبي ﷺ تلقائياً</div>
+        
+        <div class="form-group">
+            <label for="timeSelect">حدد الفاصل الزمني للتذكير:</label>
+            <select id="timeSelect">
+                <option value="300000">كل 5 دقائق</option>
+                <option value="600000">كل 10 دقائق</option>
+                <option value="900000">كل 15 دقيقة</option>
+                <option value="1200000">كل 20 دقيقة</option>
+                <option value="1500000">كل 25 دقيقة</option>
+                <option value="1800000">كل 30 دقيقة</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="audioSelect">اختر صوت التذكير المفضل (سيتم تشغيل معاينة فور الاختيار):</label>
+            <select id="audioSelect">
+                <option value="" disabled selected>-- اختر صوتاً للاستماع إليه --</option>
+                <option value="1.mp3">الصوت الأول</option>
+                <option value="2.mp3">الصوت الثاني</option>
+                <option value="3.mp3">الصوت الثالث</option>
+            </select>
+        </div>
+
+        <div class="buttons-group">
+            <button class="btn btn-start" id="startTrigger">تفعيل التذكير 🔔</button>
+            <button class="btn btn-stop" id="stopTrigger">إيقاف التذكير 🛑</button>
+        </div>
+
+        <div class="status-box" id="statusDisplay">التذكير غير نشط حالياً</div>
+    </div>
+
+    <audio id="backgroundPlayer"></audio>
+
+    <script>
+        let backgroundTimer = null;
+        const player = document.getElementById('backgroundPlayer');
+        const statusBox = document.getElementById('statusDisplay');
+        const audioSelect = document.getElementById('audioSelect');
+
+        // ✨ الميزة الجديدة: تشغيل الصوت فوراً للمعاينة عند الاختيار من القائمة
+        audioSelect.addEventListener('change', () => {
+            const previewAudio = audioSelect.value;
+            if (previewAudio) {
+                player.src = previewAudio;
+                player.play().catch(error => {
+                    console.log("المتصفح يمنع التشغيل التلقائي بدون تفاعل أولى:", error);
+                });
+            }
+        });
+
+        // منطق زر التشغيل الدوري (التايمر)
+        document.getElementById('startTrigger').addEventListener('click', () => {
+            if (!audioSelect.value) {
+                statusBox.style.backgroundColor = '#fff3cd';
+                statusBox.style.borderColor = '#ffeeba';
+                statusBox.style.color = '#856404';
+                statusBox.innerText = '⚠️ من فضلك اختر صوتاً أولاً قبل تفعيل التذكير!';
+                return;
+            }
+
+            clearInterval(backgroundTimer); 
+
+            const timeInterval = parseInt(document.getElementById('timeSelect').value);
+            const audioSource = audioSelect.value;
+
+            statusBox.style.backgroundColor = '#e8f5e9';
+            statusBox.style.borderColor = '#a5d6a7';
+            statusBox.style.color = '#2e7d32';
+            statusBox.innerText = '⏱️ التذكير يعمل الآن بانتظام.. لا تنس ذكر الله';
+
+            backgroundTimer = setInterval(() => {
+                player.src = audioSource;
+                player.play().catch(error => {
+                    console.log("خطأ في تشغيل الصوت الدوري:", error);
+                });
+            }, timeInterval);
+        });
+
+        // منطق زر الإيقاف
+        document.getElementById('stopTrigger').addEventListener('click', () => {
+            clearInterval(backgroundTimer); 
+            player.pause(); 
+            player.currentTime = 0; 
+
+            statusBox.style.backgroundColor = '#ffebee';
+            statusBox.style.borderColor = '#ffcdd2';
+            statusBox.style.color = '#c62828';
+            statusBox.innerText = '🛑 تم إيقاف التذكير التلقائي';
+        });
+    </script>
+</body>
+</html>
